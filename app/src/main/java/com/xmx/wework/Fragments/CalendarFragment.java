@@ -10,6 +10,7 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.avos.avoscloud.AVException;
 import com.bigkoo.pickerview.OptionsPickerView;
@@ -45,6 +46,11 @@ public class CalendarFragment extends BaseFragment {
     int year;
     int month;
     int day;
+    int pickerYear;
+    int pickerMonth;
+
+    TextView workTimeView;
+    TextView workDaysView;
 
     @Override
     protected View getContentView(LayoutInflater inflater, ViewGroup container) {
@@ -53,10 +59,15 @@ public class CalendarFragment extends BaseFragment {
 
     @Override
     protected void initView(View view) {
+        workTimeView = (TextView) view.findViewById(R.id.tv_work_time);
+        workDaysView = (TextView) view.findViewById(R.id.tv_work_days);
+
         picker = (DatePicker) view.findViewById(R.id.date_picker);
 
         final Calendar calendar = Calendar.getInstance();
         picker.setDate(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1);
+        operateWorkTime(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1);
+        operateWorkDays(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1);
         picker.setMode(DPMode.SINGLE);
 
         picker.setDPDecor(new DPDecor() {
@@ -110,6 +121,20 @@ public class CalendarFragment extends BaseFragment {
                 day = d[2];
 
                 pvOptions.show();
+            }
+        });
+
+        picker.setOnMonthChangedListener(new DatePicker.OnMonthChangedListener() {
+            @Override
+            public void OnMonthChanged(int year, int month) {
+                if (pickerYear == year && pickerMonth == month) {
+                    return;
+                }
+                pickerYear = year;
+                pickerMonth = month;
+
+                operateWorkTime(year, month);
+                operateWorkDays(year, month);
             }
         });
 
@@ -294,8 +319,37 @@ public class CalendarFragment extends BaseFragment {
             int year = c.mYear;
             int month = c.mMonth;
             int day = c.mDay;
-            list.add(""+year+"-"+month+"-"+day);
+            list.add("" + year + "-" + month + "-" + day);
         }
         DPCManager.getInstance().setDecorBG(list);
+    }
+
+    void operateWorkTime(int year, int month) {
+        List<CalendarEntity> calendarList = CalendarManager.getInstance().getSQLManager()
+                .selectByCondition("Time", false, "Year=" + year, "Month=" + month);
+        double time = 0;
+        for (CalendarEntity calendar : calendarList) {
+            if (calendar.mStatus == 3) {
+                time += 1;
+            } else if (calendar.mStatus == 1 || calendar.mStatus == 2) {
+                time += 0.5;
+            }
+        }
+        workTimeView.setText("" + time + "天");
+    }
+
+    void operateWorkDays(int year, int month) {
+        int days = 0;
+        Date date = new Date();
+        date.setYear(year - 1900);
+        date.setMonth(month - 1);
+        date.setDate(1);
+        while (date.getMonth() + 1 == month) {
+            if (1 <= date.getDay() && date.getDay() <= 5) {
+                days++;
+            }
+            date.setDate(date.getDate() + 1);
+        }
+        workDaysView.setText("" + days + "天");
     }
 }

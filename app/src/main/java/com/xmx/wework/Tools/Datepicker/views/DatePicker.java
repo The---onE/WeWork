@@ -35,6 +35,9 @@ public class DatePicker extends LinearLayout {
 
     private OnDateSelectedListener onDateSelectedListener;// 日期多选后监听
 
+    int mYear=0, mMonth=0;
+    private OnMonthChangedListener onMonthChangedListener; //滑动改变月份监听器
+
     /**
      * 日期单选监听器
      */
@@ -47,6 +50,11 @@ public class DatePicker extends LinearLayout {
      */
     public interface OnDateSelectedListener {
         void onDateSelected(List<String> date);
+    }
+
+    //滑动改变月份监听器
+    public interface OnMonthChangedListener {
+        void OnMonthChanged(int year, int month);
     }
 
     public DatePicker(Context context) {
@@ -141,6 +149,11 @@ public class DatePicker extends LinearLayout {
             @Override
             public void onMonthChange(int month) {
                 tvMonth.setText(mLManager.titleMonth()[month - 1]);
+
+                mMonth = month;
+                if (onMonthChangedListener != null && mYear != 0){
+                    onMonthChangedListener.OnMonthChanged(mYear, mMonth);
+                }
             }
 
             @Override
@@ -150,6 +163,11 @@ public class DatePicker extends LinearLayout {
                     tmp = tmp.replace("-", mLManager.titleBC());
                 }
                 tvYear.setText(tmp);
+
+                mYear = year;
+                if (onMonthChangedListener != null && mMonth != 0) {
+                    onMonthChangedListener.OnMonthChanged(mYear, mMonth);
+                }
             }
         });
         addView(monthView, llParams);
@@ -227,5 +245,9 @@ public class DatePicker extends LinearLayout {
                     "Current DPMode does not MULTIPLE! Please call setMode set DPMode to MULTIPLE!");
         }
         this.onDateSelectedListener = onDateSelectedListener;
+    }
+
+    public void setOnMonthChangedListener(OnMonthChangedListener onMonthChangedListener) {
+        this.onMonthChangedListener = onMonthChangedListener;
     }
 }
