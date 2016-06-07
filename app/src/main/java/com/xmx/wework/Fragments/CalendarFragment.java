@@ -20,6 +20,7 @@ import com.xmx.wework.R;
 import com.xmx.wework.Tools.BaseFragment;
 import com.xmx.wework.Tools.Data.Callback.DelCallback;
 import com.xmx.wework.Tools.Data.Callback.InsertCallback;
+import com.xmx.wework.Tools.Data.Callback.SelectCallback;
 import com.xmx.wework.Tools.Data.Callback.UpdateCallback;
 import com.xmx.wework.Tools.Datepicker.DateManager;
 import com.xmx.wework.Tools.Datepicker.bizs.calendars.DPCManager;
@@ -74,7 +75,6 @@ public class CalendarFragment extends BaseFragment {
             @Override
             public void drawDecorBG(Canvas canvas, Rect rect, Paint paint, String data) {
                 int[] day = DateManager.getDate(data);
-
                 List<CalendarEntity> calendarList = CalendarManager.getInstance()
                         .getSQLManager().selectByCondition("Time", false,
                                 "Year=" + day[0], "Month=" + day[1], "Day=" + day[2]);
@@ -113,8 +113,6 @@ public class CalendarFragment extends BaseFragment {
         picker.setOnDatePickedListener(new DatePicker.OnDatePickedListener() {
             @Override
             public void onDatePicked(String date) {
-                CalendarManager.getInstance();
-                //TODO
                 int[] d = DateManager.getDate(date);
                 year = d[0];
                 month = d[1];
@@ -186,6 +184,43 @@ public class CalendarFragment extends BaseFragment {
 
     @Override
     protected void processLogic(Bundle savedInstanceState) {
+        CalendarManager.getInstance().syncFromCloud(null, new SelectCallback<CalendarEntity>() {
+            @Override
+            public void success(List<CalendarEntity> calendarEntities) {
+                showToast(R.string.sync_success);
+                updatePaint();
+            }
+
+            @Override
+            public void notInit() {
+                showToast(R.string.not_init);
+            }
+
+            @Override
+            public void syncError(AVException e) {
+                showToast(e.getMessage());
+            }
+
+            @Override
+            public void notLoggedIn() {
+                showToast(R.string.not_loggedin);
+            }
+
+            @Override
+            public void errorNetwork() {
+                showToast(R.string.network_error);
+            }
+
+            @Override
+            public void errorUsername() {
+                showToast(R.string.username_error);
+            }
+
+            @Override
+            public void errorChecksum() {
+                showToast(R.string.not_loggedin);
+            }
+        });
         updatePaint();
     }
 
